@@ -1,0 +1,13 @@
+fastapi
+uvicorn
+pydantic
+python-multipart
+PyMuPDF
+reportlab
+httpx
+langchain
+langgraph
+langchain-core
+langchain-community
+langchain-groq
+keybert 
