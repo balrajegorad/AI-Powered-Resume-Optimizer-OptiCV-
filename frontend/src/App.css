@@ -36,3 +36,76 @@
     transform: rotate(360deg);
   }
 }
+/* frontend/src/App.css */
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f4f8;
+  margin: 0;
+  padding: 0;
+}
+
+.container {
+  max-width: 800px;
+  margin: 40px auto;
+  background: white;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.section {
+  margin-bottom: 20px;
+}
+
+.section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+textarea,
+input[type="file"] {
+  width: 100%;
+  padding: 10px;
+  font-size: 16px;
+}
+
+.buttons {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 15px;
+  border: none;
+  border-radius: 5px;
+  background-color: #0a66c2;
+  color: white;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #004182;
+}
+
+.result {
+  background: #f9fafc;
+  padding: 15px;
+  border-radius: 5px;
+  margin-top: 20px;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
