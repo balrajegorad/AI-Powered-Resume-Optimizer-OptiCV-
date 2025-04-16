@@ -1,0 +1,23 @@
+h2{
+    color: 0d9488;
+    font-size: medium
+}
+
+.container {
+    max-width: 1100px;
+    width: 100%;
+}
+
+.back-btn {
+    background-color: #0d9488;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    font-size: 1rem;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+}
+
+.back-btn:hover {
+    background-color: #0f766e;
+}

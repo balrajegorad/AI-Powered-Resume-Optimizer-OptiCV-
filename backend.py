@@ -1,8 +1,14 @@
-from fastapi import FastAPI, UploadFile, Form
+from fastapi import FastAPI, UploadFile, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional
 import logging
+from models import SignupModel, LoginModel, RequestOTPModel
+from database import users_collection
+from utils import generate_otp, send_otp_email, store_otp, verify_otp
+from passlib.context import CryptContext
+from bson.objectid import ObjectId
+
 
 import fitz  # PyMuPDF
 from io import BytesIO
@@ -28,6 +34,50 @@ app.add_middleware(
 
 resume_text_global: Optional[str] = None
 rewritten_resume_global: Optional[str] = None
+
+
+
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+@app.post("/request-otp")
+async def request_otp(data: RequestOTPModel):
+    # ✅ Fix: await the DB call!
+    existing_user = await users_collection.find_one({"email": data.email})
+    if existing_user:
+        raise HTTPException(status_code=400, detail="User already signed up. Please log in.")
+
+    otp = generate_otp()
+    try:
+        send_otp_email(data.email, otp)
+        store_otp(data.email, otp)
+        return {"message": f"OTP sent to {data.email}"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to send OTP: {str(e)}")
+
+@app.post("/signup")
+async def signup(data: SignupModel):
+    user = await users_collection.find_one({"email": data.email})
+    if user:
+        raise HTTPException(status_code=400, detail="User already exists")
+
+    if not verify_otp(data.email, data.otp):
+        raise HTTPException(status_code=400, detail="Invalid OTP")
+
+    hashed_password = pwd_context.hash(data.password)
+    await users_collection.insert_one({
+        "email": data.email,
+        "password": hashed_password
+    })
+    return {"message": "User registered successfully"}
+
+@app.post("/login")
+async def login(data: LoginModel):
+    user = await users_collection.find_one({"email": data.email})
+    if not user or not pwd_context.verify(data.password, user["password"]):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    return {"message": "Login successful"}
+
 
 @app.post("/upload")
 async def upload_resume(resume: UploadFile, jd: str = Form(...)):

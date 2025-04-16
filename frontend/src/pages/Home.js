@@ -1,78 +1,89 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import "./App.css";
+import "../App.css";
+import { logout } from "../auth";
+import { toast } from "react-toastify";
+import Modal from "react-modal";
 
-import { AiOutlineGithub } from 'react-icons/ai'
-import { AiOutlineTwitter } from 'react-icons/ai'
-import { AiOutlineLinkedin } from 'react-icons/ai'
+import { AiOutlineGithub, AiOutlineTwitter, AiOutlineLinkedin } from 'react-icons/ai'
 
-import ai_img from './Images/cartoon.png'; // with import
-import logo from './Images/logo2.png'; 
+import ai_img from '../Images/cartoon.png';
+import logo from '../Images/logo2.png';
+
+Modal.setAppElement('#root');
+
 function App() {
   const [resumeFile, setResumeFile] = useState(null);
   const [jobDesc, setJobDesc] = useState("");
   const [atsScore, setAtsScore] = useState(null);
   const [rewrittenResume, setRewrittenResume] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Handle resume file upload
+  // Individual loading states
+  const [uploading, setUploading] = useState(false);
+  const [checkingScore, setCheckingScore] = useState(false);
+  const [rewriting, setRewriting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+
+  const navigate = useNavigate();
+
   const handleUpload = async () => {
-    if (!resumeFile || !jobDesc) return alert("Upload resume and enter Job Description");
+    if (!resumeFile || !jobDesc) return toast.error("Upload resume and enter Job Description");
 
     const formData = new FormData();
     formData.append("resume", resumeFile);
     formData.append("jd", jobDesc);
 
-    setLoading(true);
+    setUploading(true);
     try {
       await axios.post("http://127.0.0.1:9999/upload", formData);
-      alert("Resume uploaded successfully!");
+      toast.success("Resume uploaded successfully!");
     } catch (error) {
-      alert("Error uploading resume: " + error.message);
+      toast.error("Error uploading resume: " + error.message);
     } finally {
-      setLoading(false);
+      setUploading(false);
     }
   };
 
-  // Check ATS score
   const checkAtsScore = async () => {
-    if (!jobDesc) return alert("Enter Job Description");
+    if (!jobDesc) return toast.error("Enter Job Description");
 
     const formData = new FormData();
     formData.append("jd", jobDesc);
 
-    setLoading(true);
+    setCheckingScore(true);
     try {
       const res = await axios.post("http://127.0.0.1:9999/ats-score", formData);
       setAtsScore(res.data.ats_score);
     } catch (error) {
-      alert("Error calculating ATS score: " + error.message);
+      toast.error("Error calculating ATS score: " + error.message);
     } finally {
-      setLoading(false);
+      setCheckingScore(false);
     }
   };
 
-  // Rewrite resume based on job description
   const rewriteResume = async () => {
-    if (!jobDesc) return alert("Enter Job Description");
+    if (!jobDesc) return toast.error("Enter Job Description");
 
     const formData = new FormData();
     formData.append("jd", jobDesc);
 
-    setLoading(true);
+    setRewriting(true);
     try {
       const res = await axios.post("http://127.0.0.1:9999/rewrite", formData);
       setRewrittenResume(res.data.rewritten_resume);
+      setIsModalOpen(true);
+      toast.success("Resume optimized successfully!");
     } catch (error) {
-      alert("Error rewriting resume: " + error.message);
+      toast.error("Error rewriting resume: " + error.message);
     } finally {
-      setLoading(false);
+      setRewriting(false);
     }
   };
 
-  // Download the optimized resume as PDF
   const downloadPDF = async () => {
-    setLoading(true);
+    setDownloading(true);
     try {
       const res = await axios.get("http://127.0.0.1:9999/generate-ats-pdf", { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
@@ -82,10 +93,16 @@ function App() {
       document.body.appendChild(link);
       link.click();
     } catch (error) {
-      alert("Error downloading PDF: " + error.message);
+      toast.error("Error downloading PDF: " + error.message);
     } finally {
-      setLoading(false);
+      setDownloading(false);
     }
+  };
+
+  const handleLogout = () => {
+    toast.success("Logout Successfully!");
+    logout();
+    navigate("/login");
   };
 
   return (
@@ -93,11 +110,9 @@ function App() {
       <header className="Header">
         <div className="Header-Sec">
           <img alt="Opticv-Logo" className="Logo" src={logo} />
-          <button className="Logout-button">Logout</button>
+          <button className="Logout-button" onClick={handleLogout}>Logout</button>
         </div>
       </header>
-
-
 
       <div className="main-container">
         <div className="left-side">
@@ -118,7 +133,7 @@ function App() {
               onChange={(e) => setResumeFile(e.target.files[0])}
             />
           </div>
-          
+
           <div className="input-group">
             <label className="input-label">Job Description</label>
             <textarea
@@ -130,36 +145,44 @@ function App() {
           </div>
 
           <div className="button-group">
-            <button onClick={handleUpload} disabled={loading} className="primary-button">
-              {loading ? "Uploading..." : "Upload Resume"}
+            <button onClick={handleUpload} disabled={uploading} className="primary-button">
+              {uploading ? "Uploading..." : "Upload Resume"}
             </button>
+            <div className="ats-score-sec">
+              <button onClick={checkAtsScore} disabled={checkingScore} className="secondary-button ats-score-btn">
+                {checkingScore ? "Calculating..." : "Check ATS Score"}
+              </button>
+              {atsScore !== null && (
+                <div className="ats-result">
+                  <p>ATS Score: {atsScore}%</p>
+                </div>
+              )}
+            </div>
             <div className="sub-buttons">
-              <button onClick={checkAtsScore} disabled={loading} className="secondary-button">
-                {loading ? "Calculating..." : "Check ATS Score"}
+              <button onClick={rewriteResume} disabled={rewriting} className="secondary-button">
+                {rewriting ? "Rewriting..." : "Rewrite Resume"}
               </button>
-              <button button onClick={rewriteResume} disabled={loading} className="secondary-button">
-                {loading ? "Rewriting..." : "Rewrite Resume"}
+              <button onClick={downloadPDF} disabled={downloading} className="secondary-button">
+                {downloading ? "Downloading..." : "Download Optimized Resume"}
               </button>
             </div>
-            <button onClick={downloadPDF} disabled={loading} className="secondary-button">
-              {loading ? "Downloading..." : "Download Optimized Resume (PDF)"}
-            </button>
           </div>
-
-          {atsScore !== null && (
-            <div className="result">
-              <h2>ATS Score: {atsScore}%</h2>
-            </div>
-          )}
-
-          {rewrittenResume && (
-            <div className="result">
-              <h2>Optimized Resume Preview:</h2>
-              <pre>{rewrittenResume}</pre>
-            </div>
-          )}
         </div>
       </div>
+
+      <Modal
+        isOpen={isModalOpen}
+        onRequestClose={() => setIsModalOpen(false)}
+        contentLabel="Resume Preview"
+        className="resume-modal"
+        overlayClassName="resume-modal-overlay"
+      >
+        <h2>Optimized Resume Preview</h2>
+        <pre className="resume-preview-text">{rewrittenResume}</pre>
+        <button className="modal-close-btn" onClick={() => setIsModalOpen(false)}>
+          Close
+        </button>
+      </Modal>
 
       <footer className="footer">
         <p className="footer-text">
@@ -167,13 +190,13 @@ function App() {
         </p>
         <div className="footer-icons">
           <a href="https://www.linkedin.com/in/balugorad/" className="social-icon">
-            <i className="linkedin"><AiOutlineLinkedin /></i>
+            <AiOutlineLinkedin />
           </a>
           <a href="https://github.com/balrajegorad" className="social-icon">
-            <i className="github"><AiOutlineGithub /></i>
+            <AiOutlineGithub />
           </a>
           <a href="https://x.com/Balraje2169?t=d0862AsgNDBm1ntnVQsyLA&s=09" className="social-icon">
-            <i className="twitter"><AiOutlineTwitter /></i>
+            <AiOutlineTwitter />
           </a>
         </div>
         <p className="footer-text footer-last-text">support@opticv.ai</p>

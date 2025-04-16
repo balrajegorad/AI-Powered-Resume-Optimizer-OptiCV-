@@ -120,12 +120,19 @@ body {
   margin-bottom: 16px;
 }
 
-.result {
-  margin-top: 20px;
-  padding: 10px;
+.ats-result {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: #ffffff;
+  color: #0d9488;
   border: 1px solid #0d9488;
-  background-color: #f0fdf4;
+  margin: 8px 0;
+  width: 100%;
+  padding: 12px;
   border-radius: 8px;
+  font-size: 16px;
+  max-height: 20px;
 }
 
 .footer {
@@ -176,7 +183,7 @@ body {
   background-color: #0d9488;
   color: white;
   text-align: center;
-  width: 100%;
+  width: 100vw;
   height: 4.6rem;
   display: flex;
   flex-direction: row;
@@ -189,10 +196,12 @@ body {
   width: 200px;
   margin: 0 auto;
 }
+
 .Header p {
   color: red;
 }
-.Header-Sec{
+
+.Header-Sec {
   display: flex;
   align-items: center;
   max-width: 1100px;
@@ -212,23 +221,79 @@ body {
   font-weight: bold;
 }
 
-.Logout-button:hover{
+.Logout-button:hover {
   cursor: pointer;
   background-color: #0d9488;
   color: #ffffff;
 }
 
-.linkedin, .github, .twitter {
+.linkedin,
+.github,
+.twitter {
   color: rgb(255, 255, 255);
+  opacity: 0.7;
+}
+
+.footer-last-text {
   opacity: 0.7;
 }
 
 .linkedin:hover,
 .github:hover,
 .twitter:hover {
-
-  color: rgba(0, 0, 255, 0.797);
+  color: rgba(94, 63, 196, 0.533);
+  opacity: 0.9;
 }
-.footer-last-text{
-  opacity: 0.7;
+
+.ats-score-sec {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Overlay covering the whole screen */
+.resume-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Modal content box centered */
+.resume-modal {
+  background: #fff;
+  padding: 2rem;
+  max-width: 700px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  border-radius: 10px;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.3);
+  position: relative;
+}
+
+/* Resume preview text */
+.resume-preview-text {
+  white-space: pre-wrap;
+  font-family: 'Courier New', Courier, monospace;
+  margin-top: 1rem;
+}
+
+/* Close button */
+.modal-close-btn {
+  margin-top: 1.5rem;
+  padding: 0.5rem 1.2rem;
+  background-color: #ff5f5f;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  float: right;
 }
