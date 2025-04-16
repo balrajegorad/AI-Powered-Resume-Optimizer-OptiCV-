@@ -2,14 +2,18 @@ from fastapi import FastAPI, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from typing import Optional
+import logging
 
 import fitz  # PyMuPDF
 from io import BytesIO
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.styles import ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Spacer, Paragraph
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 
-from sentence_transformers import SentenceTransformer, util
-
+from ats_utils import extract_keywords, evaluate_ats_score 
 from ai_agent import get_rewritten_resume
 
 app = FastAPI(title="OptiCV Resume Optimizer")
@@ -22,33 +26,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 resume_text_global: Optional[str] = None
 rewritten_resume_global: Optional[str] = None
-
-
-similarity_model = SentenceTransformer("all-MiniLM-L6-v2")
-
-def extract_keywords(text, top_n=15):
-    words = text.lower().split()
-    keywords = [w.strip(".,:-()") for w in words if len(w) > 3]
-    freq = {}
-    for word in keywords:
-        freq[word] = freq.get(word, 0) + 1
-    sorted_keywords = sorted(freq.items(), key=lambda x: x[1], reverse=True)
-    return [kw for kw, _ in sorted_keywords[:top_n]]
-
-def evaluate_ats_score(resume, jd_keywords):
-    resume_text = resume.lower()
-    keyword_matches = sum(1 for word in jd_keywords if word in resume_text)
-    keyword_score = round((keyword_matches / len(jd_keywords)) * 100, 2)
-
-    embedding1 = similarity_model.encode(resume, convert_to_tensor=True)
-    embedding2 = similarity_model.encode(" ".join(jd_keywords), convert_to_tensor=True)
-    similarity_score = round(util.pytorch_cos_sim(embedding1, embedding2).item() * 100, 2)
-
-    final_score = round((keyword_score * 0.6 + similarity_score * 0.4), 2)
-    return final_score, keyword_score, similarity_score
 
 @app.post("/upload")
 async def upload_resume(resume: UploadFile, jd: str = Form(...)):
@@ -84,33 +63,124 @@ async def rewrite_resume(jd: str = Form(...)):
     if not resume_text_global:
         return JSONResponse(status_code=400, content={"error": "Upload resume first."})
 
-    rewritten_resume = get_rewritten_resume(resume_text_global, jd)
+    rewritten_resume = await get_rewritten_resume(resume_text_global, jd)
     rewritten_resume_global = rewritten_resume
 
     return {"rewritten_resume": rewritten_resume}
 
-@app.get("/generate-pdf")
-def generate_pdf():
+@app.get("/generate-ats-pdf")
+async def generate_ats_pdf():
     if not rewritten_resume_global:
-        return JSONResponse(status_code=400, content={"error": "Rewrite the resume first."})
+        return JSONResponse(status_code=400, content={"error": "No resume to convert"})
 
     buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
-    text_object = p.beginText(40, 750)
-    text_object.setFont("Helvetica", 10)
 
-    for line in rewritten_resume_global.split("\n"):
-        text_object.textLine(line)
+    try:
+        pdfmetrics.registerFont(TTFont('Arial', 'Arial.ttf'))
+        pdfmetrics.registerFont(TTFont('Arial-Bold', 'Arial Bold.ttf'))
+        base_font = 'Arial'
+    except Exception as e:
+        base_font = 'Helvetica'
+        logging.warning(f"Arial font not found - falling back to Helvetica. Error: {str(e)}")
 
-    p.drawText(text_object)
-    p.showPage()
-    p.save()
+    styles = {
+        'title': ParagraphStyle(
+            name='Title',
+            fontName=f'{base_font}-Bold' if base_font == 'Arial' else 'Helvetica-Bold',
+            fontSize=14,
+            leading=16,
+            spaceAfter=12,
+            alignment=1  
+        ),
+        'section': ParagraphStyle(
+            name='Section',
+            fontName=f'{base_font}-Bold' if base_font == 'Arial' else 'Helvetica-Bold',
+            fontSize=12,
+            leading=14,
+            spaceAfter=8,
+            textTransform='uppercase',
+            alignment=1 
+        ),
+        'bullet': ParagraphStyle(
+            name='Bullet',
+            fontName=base_font,
+            fontSize=11,
+            leading=13,
+            leftIndent=10,
+            bulletIndent=5,
+            spaceBefore=4,
+            spaceAfter=4,
+            alignment=1 
+        ),
+        'normal': ParagraphStyle(
+            name='Normal',
+            fontName=base_font,
+            fontSize=11,
+            leading=13,
+            spaceAfter=6,
+            alignment=1  
+        ),
+        'footer': ParagraphStyle(
+            name='Footer',
+            fontName=base_font,
+            fontSize=8,
+            leading=10,
+            alignment=1,  
+            textColor=colors.grey
+        ),
+    }
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=letter,
+        leftMargin=36,  
+        rightMargin=36,
+        topMargin=72, 
+        bottomMargin=36
+    )
+    
+    story = []
+    current_section = None
+    
+    
+    
+    for line in rewritten_resume_global.split('\n'):
+        line = line.strip()
+        if not line:
+            continue
+        if line.upper() in ['PROFESSIONAL SUMMARY', 'WORK EXPERIENCE', 
+                          'EDUCATION', 'TECHNICAL SKILLS', 'PROJECTS']:
+            current_section = line.upper()
+            story.append(Paragraph(f"<b>{current_section}</b>", styles['section']))
+            continue
+        
+        if line.startswith(('- ', '• ', '* ')):
+            story.append(Paragraph(f"• {line[2:]}", styles['bullet']))
+        elif any(x in line.lower() for x in ['@', 'linkedin.com', 'github.com']):
+            story.append(Paragraph(line, styles['normal']))
+        else:
+            story.append(Paragraph(line, styles['normal']))
+
+        story.append(Spacer(1, 4))  
+    def add_footer(canvas, doc):
+        canvas.saveState()
+        footer_text = f"Page {doc.page}"
+        canvas.setFont('Helvetica', 8)
+        canvas.drawString(270, 30, footer_text) 
+        canvas.restoreState()
+
+    doc.build(story, onFirstPage=add_footer, onLaterPages=add_footer)
 
     buffer.seek(0)
+    
     return StreamingResponse(
         buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": "attachment; filename=optimized_resume.pdf"}
+        headers={
+            "Content-Disposition": "attachment; filename=ats_optimized_resume.pdf",
+            "Content-Type": "application/pdf",
+            "X-ATS-Optimized": "true" 
+        }
     )
 
 if __name__ == "__main__":
