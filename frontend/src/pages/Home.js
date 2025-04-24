@@ -10,6 +10,7 @@ import { AiOutlineGithub, AiOutlineTwitter, AiOutlineLinkedin } from 'react-icon
 
 import ai_img from '../Images/cartoon.png';
 import logo from '../Images/logo2.png';
+import BASE_URL from "../config";
 
 Modal.setAppElement('#root');
 
@@ -37,7 +38,7 @@ function App() {
 
     setUploading(true);
     try {
-      await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/upload", formData);
+      await axios.post(`${BASE_URL}/upload`, formData);
       toast.success("Resume uploaded successfully!");
     } catch (error) {
       toast.error("Error uploading resume: " + error.message);
@@ -54,7 +55,7 @@ function App() {
 
     setCheckingScore(true);
     try {
-      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/ats-score", formData);
+      const res = await axios.post(`${BASE_URL}/ats-score`, formData);
       setAtsScore(res.data.ats_score);
     } catch (error) {
       toast.error("Error calculating ATS score: " + error.message);
@@ -71,7 +72,7 @@ function App() {
 
     setRewriting(true);
     try {
-      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/rewrite", formData);
+      const res = await axios.post(`${BASE_URL}/rewrite`, formData);
       setRewrittenResume(res.data.rewritten_resume);
       setOptimizedAtsScore(res.data.ats_score); // Store the optimized ATS score
       setIsModalOpen(true);
@@ -87,7 +88,7 @@ function App() {
     setDownloading(true);
     try {
       if (!resumeFile || !jobDesc) return toast.error("Upload resume or enter Job Description");
-      const res = await axios.get("https://ai-powered-resume-optimizer-opticv.onrender.com/generate-ats-pdf", { responseType: "blob" });
+      const res = await axios.get(`${BASE_URL}/generate-ats-pdf`, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;

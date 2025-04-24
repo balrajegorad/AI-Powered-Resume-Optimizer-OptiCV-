@@ -9,6 +9,9 @@ import ResumePreview from "./pages/ResumePreview";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
+
+
+
 const PrivateRoute = ({ children }) => {
   return isLoggedIn() ? children : <Navigate to="/login" />;
 };

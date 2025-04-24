@@ -5,6 +5,9 @@ import './SignupLoginForm.css';
 import { setToken } from "../auth";
 import { toast } from "react-toastify";
 
+import BASE_URL from "../config";
+
+
 const Signup = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -18,7 +21,7 @@ const Signup = () => {
   const sendOtp = async () => {
     setSendingOtp(true);
     try {
-      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/request-otp", { email });
+      const res = await axios.post(`${BASE_URL}/request-otp`, { email });
       toast.success(res.data.message);
       setOtpSent(true);
     } catch (err) {
@@ -32,11 +35,11 @@ const Signup = () => {
     e.preventDefault();
     setSigningUp(true);
     try {
-      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/signup", {
-        email,
-        password,
-        otp,
-      });
+      const res = await axios.post(`${BASE_URL}/signup`, {
+                  email,
+                  password,
+                  otp,
+                });
       setToken(res.data.token);
       toast.success("Signup successful!");
       navigate("/");

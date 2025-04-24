@@ -5,6 +5,8 @@ import { setToken } from "../auth";
 import './SignupLoginForm.css';
 import { toast } from "react-toastify";
 
+import BASE_URL from "../config";
+
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -16,7 +18,7 @@ const Login = () => {
     e.preventDefault();
     setLoggingIn(true);
     try {
-      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/login", {
+      const res = await axios.post(`${BASE_URL}/login`, {
         email,
         password,
       });
