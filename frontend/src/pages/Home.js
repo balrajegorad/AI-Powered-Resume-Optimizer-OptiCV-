@@ -17,10 +17,10 @@ function App() {
   const [resumeFile, setResumeFile] = useState(null);
   const [jobDesc, setJobDesc] = useState("");
   const [atsScore, setAtsScore] = useState(null);
+  const [optimizedAtsScore, setOptimizedAtsScore] = useState(null); // New state
   const [rewrittenResume, setRewrittenResume] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Individual loading states
   const [uploading, setUploading] = useState(false);
   const [checkingScore, setCheckingScore] = useState(false);
   const [rewriting, setRewriting] = useState(false);
@@ -47,7 +47,7 @@ function App() {
   };
 
   const checkAtsScore = async () => {
-    if (!jobDesc) return toast.error("Enter Job Description");
+    if (!resumeFile || !jobDesc) return toast.error("Upload resume or enter Job Description");
 
     const formData = new FormData();
     formData.append("jd", jobDesc);
@@ -64,7 +64,7 @@ function App() {
   };
 
   const rewriteResume = async () => {
-    if (!jobDesc) return toast.error("Enter Job Description");
+    if (!resumeFile || !jobDesc) return toast.error("Upload resume or enter Job Description");
 
     const formData = new FormData();
     formData.append("jd", jobDesc);
@@ -73,6 +73,7 @@ function App() {
     try {
       const res = await axios.post("http://127.0.0.1:9999/rewrite", formData);
       setRewrittenResume(res.data.rewritten_resume);
+      setOptimizedAtsScore(res.data.ats_score); // Store the optimized ATS score
       setIsModalOpen(true);
       toast.success("Resume optimized successfully!");
     } catch (error) {
@@ -85,6 +86,7 @@ function App() {
   const downloadPDF = async () => {
     setDownloading(true);
     try {
+      if (!resumeFile || !jobDesc) return toast.error("Upload resume or enter Job Description");
       const res = await axios.get("http://127.0.0.1:9999/generate-ats-pdf", { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
@@ -148,16 +150,20 @@ function App() {
             <button onClick={handleUpload} disabled={uploading} className="primary-button">
               {uploading ? "Uploading..." : "Upload Resume"}
             </button>
+
             <div className="ats-score-sec">
               <button onClick={checkAtsScore} disabled={checkingScore} className="secondary-button ats-score-btn">
                 {checkingScore ? "Calculating..." : "Check ATS Score"}
               </button>
-              {atsScore !== null && (
+
+              {(atsScore !== null || optimizedAtsScore !== null) && (
                 <div className="ats-result">
-                  <p>ATS Score: {atsScore}%</p>
+                  {atsScore !== null && <p>Original ATS Score: {atsScore}%</p>}
+                  {optimizedAtsScore !== null && <p>Optimized ATS Score: {optimizedAtsScore}%</p>}
                 </div>
               )}
             </div>
+
             <div className="sub-buttons">
               <button onClick={rewriteResume} disabled={rewriting} className="secondary-button">
                 {rewriting ? "Rewriting..." : "Rewrite Resume"}

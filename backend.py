@@ -116,7 +116,15 @@ async def rewrite_resume(jd: str = Form(...)):
     rewritten_resume = await get_rewritten_resume(resume_text_global, jd)
     rewritten_resume_global = rewritten_resume
 
-    return {"rewritten_resume": rewritten_resume}
+    jd_keywords = extract_keywords(jd)
+
+   
+    final_score, keyword_score, similarity_score = evaluate_ats_score(rewritten_resume, jd_keywords)
+
+    return {
+        "rewritten_resume": rewritten_resume,
+        "ats_score": final_score
+    }
 
 @app.get("/generate-ats-pdf")
 async def generate_ats_pdf():
