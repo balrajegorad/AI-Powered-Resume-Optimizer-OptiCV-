@@ -9,7 +9,7 @@ from ats_utils import extract_keywords, evaluate_ats_score
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
-logging.info("Loading LLMs...")
+
 section_llm = ChatGroq(model_name="llama-3.3-70b-versatile", temperature=0.2)
 feedback_llm = ChatGroq(model_name="llama-3.1-8b-instant", temperature=0.25)
 
@@ -199,7 +199,7 @@ async def get_rewritten_resume(resume_text, job_description):
     )
 
     ats_score_1, keyword_score_1, similarity_score_1 = evaluate_ats_score(ordered_resume, jd_keywords)
-    logging.info(f"🔍 ATS Score (Initial): {ats_score_1}%, Similarity: {similarity_score_1}%")
+    
 
     improved_resume = await feedback_chain.ainvoke({
         "resume": ordered_resume,
@@ -211,7 +211,7 @@ async def get_rewritten_resume(resume_text, job_description):
     })
 
     ats_score_2, _, similarity_score_2 = evaluate_ats_score(improved_resume, jd_keywords)
-    logging.info(f"✅ ATS Score (Final): {ats_score_2}%, Similarity: {similarity_score_2}%")
+    
 
     return improved_resume.strip()
 
