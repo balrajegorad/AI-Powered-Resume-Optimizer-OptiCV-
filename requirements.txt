@@ -8,10 +8,8 @@ python-dotenv
 motor
 PyMuPDF
 reportlab
-bson
 sentence-transformers
 langchain
 langchain-groq
 python-jose[cryptography]
 requests
-smtplib
