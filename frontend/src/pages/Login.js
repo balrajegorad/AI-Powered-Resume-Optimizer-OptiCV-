@@ -16,7 +16,7 @@ const Login = () => {
     e.preventDefault();
     setLoggingIn(true);
     try {
-      const res = await axios.post("http://127.0.0.1:9999/login", {
+      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/login", {
         email,
         password,
       });

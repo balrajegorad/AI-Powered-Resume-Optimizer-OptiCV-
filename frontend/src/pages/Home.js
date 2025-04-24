@@ -37,7 +37,7 @@ function App() {
 
     setUploading(true);
     try {
-      await axios.post("http://127.0.0.1:9999/upload", formData);
+      await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/upload", formData);
       toast.success("Resume uploaded successfully!");
     } catch (error) {
       toast.error("Error uploading resume: " + error.message);
@@ -54,7 +54,7 @@ function App() {
 
     setCheckingScore(true);
     try {
-      const res = await axios.post("http://127.0.0.1:9999/ats-score", formData);
+      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/ats-score", formData);
       setAtsScore(res.data.ats_score);
     } catch (error) {
       toast.error("Error calculating ATS score: " + error.message);
@@ -71,7 +71,7 @@ function App() {
 
     setRewriting(true);
     try {
-      const res = await axios.post("http://127.0.0.1:9999/rewrite", formData);
+      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/rewrite", formData);
       setRewrittenResume(res.data.rewritten_resume);
       setOptimizedAtsScore(res.data.ats_score); // Store the optimized ATS score
       setIsModalOpen(true);
@@ -87,7 +87,7 @@ function App() {
     setDownloading(true);
     try {
       if (!resumeFile || !jobDesc) return toast.error("Upload resume or enter Job Description");
-      const res = await axios.get("http://127.0.0.1:9999/generate-ats-pdf", { responseType: "blob" });
+      const res = await axios.get("https://ai-powered-resume-optimizer-opticv.onrender.com/generate-ats-pdf", { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
       link.href = url;

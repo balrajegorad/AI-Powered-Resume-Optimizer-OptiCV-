@@ -18,7 +18,7 @@ const Signup = () => {
   const sendOtp = async () => {
     setSendingOtp(true);
     try {
-      const res = await axios.post("http://127.0.0.1:9999/request-otp", { email });
+      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/request-otp", { email });
       toast.success(res.data.message);
       setOtpSent(true);
     } catch (err) {
@@ -32,7 +32,7 @@ const Signup = () => {
     e.preventDefault();
     setSigningUp(true);
     try {
-      const res = await axios.post("http://127.0.0.1:9999/signup", {
+      const res = await axios.post("https://ai-powered-resume-optimizer-opticv.onrender.com/signup", {
         email,
         password,
         otp,
