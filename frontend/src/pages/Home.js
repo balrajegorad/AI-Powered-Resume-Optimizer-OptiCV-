@@ -85,9 +85,9 @@ function App() {
   };
 
   const downloadPDF = async () => {
+    if (!rewrittenResume) return toast.error("Please rewrite the resume first before downloading.");
     setDownloading(true);
     try {
-      if (!resumeFile || !jobDesc) return toast.error("Upload resume or enter Job Description");
       const res = await axios.get(`${BASE_URL}/generate-ats-pdf`, { responseType: "blob" });
       const url = window.URL.createObjectURL(new Blob([res.data]));
       const link = document.createElement("a");
